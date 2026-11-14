@@ -57,3 +57,35 @@ def test_ontology_hierarchy():
     from spectrum_demo.vocab import SPECTRO
     assert semantics.is_a(SPECTRO.DarkSpectrum, SPECTRO.IntensitySpectrum)
     assert not semantics.is_a(SPECTRO.TransmittanceSpectrum, SPECTRO.IntensitySpectrum)
+
+
+def test_concept_tree_groups_datasets_of_both_labs_by_concept(files):
+    from spectrum_demo import views
+    loaded = {"Lab A": storage.load(files["A"])[0], "Lab B": storage.load(files["B"])[0]}
+    results = {lab: analysis.analyse(dte) for lab, dte in loaded.items()}
+    tree = views.concept_tree(loaded, results)
+
+    def parent_label(label, file):
+        return next(n.label for n in tree.walk() if any(c.label == label and c.file == file
+                                                       for c in n.children))
+    assert parent_label("background", "Lab A") == "dark spectrum"
+    assert parent_label("reference", "Lab A") == "reference spectrum"
+    assert parent_label("signal", "Lab A") == "sample spectrum"
+    assert parent_label("Trans", "Lab B") == "transmittance spectrum"
+    assert parent_label("absorbance", "Lab B") == "absorbance spectrum"
+    # the three intensity spectra sit under "intensity spectrum", the transmittance does not
+    intensity = tree.find("intensity spectrum")
+    assert {c.label for c in intensity.children} == {"dark spectrum", "reference spectrum",
+                                                     "sample spectrum"}
+    # provenance links and the HDF5 path of each dataset (what a double click loads)
+    assert [d.label for d in tree.find("absorbance", "Lab A").derived_from] == \
+        ["background", "reference", "signal"]
+    leaf = tree.find("Trans", "Lab B")
+    assert storage.load_node(files["B"], leaf.path).name == "Trans"
+
+
+def test_quantity_tree_and_text_rendering(files):
+    from spectrum_demo import views
+    loaded = {"Lab A": storage.load(files["A"])[0], "Lab B": storage.load(files["B"])[0]}
+    text = views.render_text(views.quantity_tree(loaded), show_path=False)
+    assert "Transmittance" in text and "Percent" in text and "Lab B: Trans" in text

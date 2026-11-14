@@ -36,3 +36,17 @@ def load(path) -> tuple[DataToExport, dict]:
     finally:
         h5.close_file()
     return dte, attrs
+
+
+def load_node(path, node_path: str):
+    """Load the single dataset stored at ``node_path`` in the file ``path``.
+
+    This is what double-clicking a dataset in a tree view does: the tree item only needs to carry
+    the HDF5 path of its data.
+    """
+    h5 = H5SaverLowLevel()
+    h5.init_file(file_name=Path(path), new_file=False, mode="r")
+    try:
+        return DataLoader(h5).load_data(node_path)
+    finally:
+        h5.close_file()

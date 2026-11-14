@@ -57,7 +57,7 @@ import h5py
 import matplotlib.pyplot as plt
 import numpy as np
 
-from spectrum_demo import analysis, semantics, storage
+from spectrum_demo import analysis, semantics, storage, views
 from spectrum_demo import vocab as v
 
 ROOT = Path.cwd().parent if Path.cwd().name == "notebooks" else Path.cwd()
@@ -266,8 +266,70 @@ fig.tight_layout()
 md(r"""
 Both labs now give the same spectrum, with the expected maximum near 450 nm, from files that
 share no naming convention.
+""")
 
-## 6. When something is missing, it says so
+md(r"""
+## 6. The same files, seen through the ontology
+
+A file browser shows **where** things are stored. Here is what the HDF5 browser would show for the
+two annotated files: the storage hierarchy, in which `Data00` of `CH00` means nothing by itself
+(and is not even the same thing in the two files).
+""")
+
+code(r"""
+loaded = {lab: dte for lab, (dte, _) in annotated.items()}
+print(views.render_text(views.hdf5_tree(loaded), show_path=False))
+""")
+
+md(r"""
+With the annotations, the same datasets can be arranged by **what they are**. The nodes below
+are concepts of the ontology, in the hierarchy defined by `spectro.ttl`; the datasets of both
+labs hang from the concept that describes them, each one keeping the HDF5 path of its data (after
+the arrow). The absorbance spectra computed in section 5 are added with their *derived from* links.
+""")
+
+code(r"""
+tree = views.concept_tree(loaded, results)
+print(views.render_text(tree))
+""")
+
+code(r"""
+fig, ax = plt.subplots(figsize=(10, 4.4))
+views.draw_concept_tree(tree, ax, LAB_COLORS)
+ax.set_title("Datasets of both labs, arranged by the ontology (dashed: derived from)", loc="left")
+fig.tight_layout()
+""")
+
+md(r"""
+Other arrangements come from the same annotations at no cost, for instance by quantity and unit:
+""")
+
+code(r"""
+print(views.render_text(views.quantity_tree(loaded), show_path=False))
+""")
+
+md(r"""
+The tree is only a model: each dataset leaf carries the HDF5 path of its data, so a browser can
+load it when the user double-clicks it. This is what that would do for two leaves, one from each lab:
+""")
+
+code(r"""
+fig, axes_ = plt.subplots(1, 2)
+for ax, (lab, name) in zip(axes_, (("Lab A", "signal"), ("Lab B", "Trans"))):
+    leaf = tree.find(name, file=lab)
+    dwa = storage.load_node(DATA / f"lab_{lab[-1]}.h5", leaf.path)      # "double-click"
+    axis = dwa.axes[0]
+    ax.plot(axis.get_data(), dwa[0], color=LAB_COLORS[lab], lw=1.5)
+    ax.set(title=f"{lab}: {name}  ({semantics.label(leaf.iri)})",
+           xlabel=f"{semantics.label(getattr(axis, v.QUANTITY_KIND))} "
+                  f"[{semantics.label(getattr(axis, v.UNIT_IRI))}]",
+           ylabel=f"{semantics.label(getattr(dwa, v.QUANTITY_KIND))} "
+                  f"[{semantics.label(getattr(dwa, v.UNIT_IRI))}]")
+fig.tight_layout()
+""")
+
+md(r"""
+## 7. When something is missing, it says so
 
 Give the same function a file without annotations: instead of guessing (section 2), it
 refuses and says what is missing.
@@ -281,7 +343,7 @@ except analysis.AnnotationError as error:
 """)
 
 md(r"""
-## 7. What is in the ontology, concretely?
+## 8. What is in the ontology, concretely?
 
 Two small files in `ontology/`:
 
@@ -307,7 +369,7 @@ for unit in ("PERCENT", "FRACTION", "NanoM", "EV"):
 """)
 
 md(r"""
-## 8. Second layer: a description that other tools can search (JSON-LD)
+## 9. Second layer: a description that other tools can search (JSON-LD)
 
 The HDF5 file stays the data container. From its annotations we generate a small JSON-LD
 file, a standard web format for linked data, that describes what the file contains and what
@@ -327,7 +389,7 @@ print((OUT / "lab_B.jsonld").read_text())
 """)
 
 md(r"""
-## 9. Bonus: one question asked to both labs at once
+## 10. Bonus: one question asked to both labs at once
 
 Load the two JSON-LD descriptions and the ontology in one graph, and ask a question in SPARQL
 (the query language of linked data). Note that the question uses the word
@@ -377,7 +439,7 @@ for row in graph.query(QUERY_PEAK):
 """)
 
 md(r"""
-## 10. What this shows, and what it does not (yet)
+## 11. What this shows, and what it does not (yet)
 
 **Shown here**
 
@@ -396,15 +458,18 @@ md(r"""
   the code that already knows the role of each spectrum: for instance the Absorption extension
   of the tutorial, which has *Take Background* and *Take Reference* buttons, knows exactly which
   spectrum is the dark and which is the reference.
-* If an axis is converted to other units, its `unit_iri` is no longer valid: PyMoDAQ does not
-  update it (the converted axis is a new object without extra attributes).
+* If an axis is converted to other units, its `unit_iri` is no longer valid, and PyMoDAQ does not
+  update it: `axis.units_as(...)` converts in place and keeps the old `unit_iri`; the
+  `inplace=False` forms return a new axis without any extra attribute (PyMoDAQ issue #1494).
+* Axis extra attributes are saved in the HDF5 file but are not sent by PyMoDAQ's binary
+  serialization (LECO) yet (same issue).
 * The vocabulary is a draft (namespace not reserved on w3id.org, not reviewed by spectroscopists).
 * QUDT has no term named "decadic absorbance"; we use `TransmittanceDensity`, defined as
   −log10 of the transmittance.
 
 **Possible next steps**
 
-1. A small PyMoDAQ CustomApp with a *with / without ontology* switch, for people who do not
+1. A PyMoDAQ application with a *with / without ontology* switch and the ontology-based tree of section 6 as a mode of the HDF5 browser, for people who do not
    use notebooks.
 2. Write the annotations in the Absorption extension at acquisition time.
 3. Transient absorption (pump-probe) as a second technique, reusing the same vocabulary.

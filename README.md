@@ -42,6 +42,7 @@ PyMoDAQ, no Qt needed). Tested with PyMoDAQ `dev` at commit 9bc6957 plus the pat
 | `src/spectrum_demo/simulation.py` | Simulated data for Lab A and Lab B, and where the annotations are added |
 | `src/spectrum_demo/storage.py` | Save / load with PyMoDAQ's own HDF5 savers (nothing ontology-specific) |
 | `src/spectrum_demo/analysis.py` | The lab scripts, the configuration-based script, and the annotation-based `analyse()` |
+| `src/spectrum_demo/views.py` | Looking at annotated files through the ontology: a tree of concepts with the datasets of all files as leaves (each leaf keeps its HDF5 path), by concept or by quantity and unit, as text or as a matplotlib diagram. Plain Python model, no GUI |
 | `src/spectrum_demo/semantics.py` | Ontology lookups (labels, definitions, hierarchy, unit factors) and JSON-LD export |
 | `data/` | Generated HDF5 files (annotated and plain) and JSON-LD descriptions |
 | `scripts/build_notebook.py` | Source of the notebook (edit this, then regenerate and execute) |
