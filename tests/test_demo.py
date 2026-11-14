@@ -1,0 +1,57 @@
+import pytest
+from rdflib import Graph
+
+from spectrum_demo import analysis, semantics, simulation, storage
+
+
+@pytest.fixture(scope="module")
+def files(tmp_path_factory):
+    folder = tmp_path_factory.mktemp("data")
+    out = {}
+    for lab, make in (("A", simulation.make_lab_a), ("B", simulation.make_lab_b)):
+        out[lab] = storage.save(folder / f"lab_{lab}.h5", make(annotate=True), lab=f"Lab {lab}")
+        out[lab + "_plain"] = storage.save(folder / f"lab_{lab}_plain.h5", make(annotate=False))
+    return out
+
+
+def test_annotations_survive_save_and_load(files):
+    dte, _ = storage.load(files["B"])
+    assert dte[0].unit_iri == "http://qudt.org/vocab/unit/PERCENT"
+    assert dte[0].semantic_iri.endswith("#TransmittanceSpectrum")
+
+
+@pytest.mark.parametrize("lab", ["A", "B"])
+def test_generic_analysis_finds_the_band(files, lab):
+    dte, _ = storage.load(files[lab])
+    result = analysis.analyse(dte)
+    assert result.peak_wavelength_nm == pytest.approx(450, abs=5)
+    assert result.peak_absorbance == pytest.approx(0.3, abs=0.02)
+
+
+def test_lab_scripts_fail_on_the_other_lab(files):
+    a, _ = storage.load(files["A_plain"])
+    b, _ = storage.load(files["B_plain"])
+    with pytest.raises(AttributeError):
+        analysis.lab_a_script(b)
+    wrong = analysis.lab_b_script(a)          # silently wrong
+    assert wrong.peak_absorbance < 0
+
+
+def test_missing_annotations_are_reported(files):
+    dte, _ = storage.load(files["B_plain"])
+    with pytest.raises(analysis.AnnotationError, match="semantic_iri"):
+        analysis.analyse(dte)
+
+
+def test_jsonld_roundtrip(files, tmp_path):
+    dte, attrs = storage.load(files["A"])
+    path = semantics.export_jsonld(dte, tmp_path / "a.jsonld", "https://example.org/a.h5", attrs,
+                                   analysis.analyse(dte))
+    g = Graph().parse(path, format="json-ld")
+    assert len(g) > 20
+
+
+def test_ontology_hierarchy():
+    from spectrum_demo.vocab import SPECTRO
+    assert semantics.is_a(SPECTRO.DarkSpectrum, SPECTRO.IntensitySpectrum)
+    assert not semantics.is_a(SPECTRO.TransmittanceSpectrum, SPECTRO.IntensitySpectrum)

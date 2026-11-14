@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pymodaq_spectrum_demo"
+version = "0.1.0"
+description = "Demo: what an ontology layer brings to PyMoDAQ data (UV-vis absorption example)"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "pymodaq_data>=5.3",
+    "tables",
+    "numpy",
+    "rdflib>=7",
+    "matplotlib",
+]
+
+[project.optional-dependencies]
+notebook = ["jupyterlab"]
+test = ["pytest", "nbconvert", "nbformat", "ipykernel"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

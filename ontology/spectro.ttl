@@ -1,0 +1,109 @@
+@prefix spectro:      <https://w3id.org/pymodaq/spectro#> .
+@prefix sosa:         <http://www.w3.org/ns/sosa/> .
+@prefix prov:         <http://www.w3.org/ns/prov#> .
+@prefix qudt:         <http://qudt.org/schema/qudt/> .
+@prefix quantitykind: <http://qudt.org/vocab/quantitykind/> .
+@prefix unit:         <http://qudt.org/vocab/unit/> .
+@prefix obo:          <http://purl.obolibrary.org/obo/> .
+@prefix panet:        <http://purl.org/pan-science/PaNET/> .
+@prefix owl:          <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:         <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:          <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:         <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms:      <http://purl.org/dc/terms/> .
+
+# ---------------------------------------------------------------------------
+# A deliberately small spectroscopy vocabulary for the PyMoDAQ "spectrum demo".
+# DRAFT, not reviewed by domain experts. The namespace is provisional
+# (w3id.org/pymodaq is not reserved yet).
+# It only says what the demo needs: what each recorded spectrum IS (its role),
+# which quantity it holds and along which spectral axis. Everything else
+# (units, quantity kinds, technique) is reused from QUDT, CHMO, SOSA and PROV-O.
+# ---------------------------------------------------------------------------
+
+<https://w3id.org/pymodaq/spectro> a owl:Ontology ;
+    rdfs:label "PyMoDAQ spectroscopy vocabulary (demo draft)"@en ;
+    dcterms:description "Minimal vocabulary to annotate absorption spectra recorded with PyMoDAQ: role of each spectrum (sample, reference, dark), transmittance and absorbance spectra, spectral axis."@en ;
+    owl:versionInfo "0.1.0-draft" ;
+    dcterms:created "2026-11-14"^^xsd:date ;
+    dcterms:license <https://opensource.org/licenses/MIT> ;
+    rdfs:comment "No owl:imports, to stay light: SOSA, PROV-O, QUDT and CHMO terms are reused by IRI. The labels and conversion factors of the QUDT and CHMO terms used are copied in external_excerpt.ttl."@en .
+
+# ---------------- The measurement ----------------
+
+spectro:AbsorptionMeasurement a owl:Class ;
+    rdfs:subClassOf sosa:Observation , prov:Activity ;
+    rdfs:label "absorption spectroscopy measurement"@en , "mesure de spectroscopie d'absorption"@fr ;
+    skos:definition "Measurement of the light transmitted by a sample as a function of wavelength (or photon energy), compared with the light transmitted without the sample, to obtain its transmittance or absorbance spectrum."@en ;
+    skos:closeMatch obo:CHMO_0000292 ;          # ultraviolet-visible spectrophotometry
+    skos:broadMatch panet:PaNET01115 .          # optical spectroscopy-based techniques
+
+# ---------------- What a recorded spectrum is ----------------
+
+spectro:Spectrum a owl:Class ;
+    rdfs:subClassOf prov:Entity ;
+    rdfs:label "spectrum"@en , "spectre"@fr ;
+    skos:definition "One-dimensional dataset giving a quantity as a function of a spectral coordinate (wavelength, photon energy or wavenumber)."@en .
+
+spectro:IntensitySpectrum a owl:Class ;
+    rdfs:subClassOf spectro:Spectrum ;
+    rdfs:label "intensity spectrum"@en , "spectre d'intensité"@fr ;
+    skos:definition "Spectrum of the raw signal delivered by the detector (for instance counts), proportional to the light intensity reaching it plus an offset."@en .
+
+spectro:SampleSpectrum a owl:Class ;
+    rdfs:subClassOf spectro:IntensitySpectrum ;
+    rdfs:label "sample spectrum"@en , "spectre échantillon"@fr ;
+    skos:altLabel "signal"@en , "I"@en ;
+    skos:definition "Intensity spectrum recorded with the light passing through the sample."@en .
+
+spectro:ReferenceSpectrum a owl:Class ;
+    rdfs:subClassOf spectro:IntensitySpectrum ;
+    rdfs:label "reference spectrum"@en , "spectre de référence"@fr ;
+    skos:altLabel "blank"@en , "I0"@en , "blanc"@fr ;
+    skos:definition "Intensity spectrum recorded in the same conditions as the sample spectrum but without the absorbing species (empty beam, solvent or bare substrate)."@en ;
+    skos:relatedMatch obo:CHMO_0002804 .        # blank value
+
+spectro:DarkSpectrum a owl:Class ;
+    rdfs:subClassOf spectro:IntensitySpectrum ;
+    rdfs:label "dark spectrum"@en , "spectre de noir"@fr ;
+    skos:altLabel "background"@en , "dark"@en , "fond"@fr ;
+    skos:definition "Intensity spectrum recorded with the light blocked; it measures the detector offset and dark current, to be subtracted from the sample and reference spectra."@en .
+
+spectro:TransmittanceSpectrum a owl:Class ;
+    rdfs:subClassOf spectro:Spectrum ;
+    rdfs:label "transmittance spectrum"@en , "spectre de transmission"@fr ;
+    skos:definition "Spectrum of the fraction of the incident light transmitted by the sample, T = (I - I_dark) / (I0 - I_dark)."@en ;
+    spectro:quantityKind quantitykind:Transmittance .
+
+spectro:AbsorbanceSpectrum a owl:Class ;
+    rdfs:subClassOf spectro:Spectrum ;
+    rdfs:label "absorbance spectrum"@en , "spectre d'absorbance"@fr ;
+    skos:altLabel "optical density"@en , "OD"@en ;
+    skos:definition "Spectrum of the decadic absorbance A = -log10(T), T being the transmittance."@en ;
+    skos:closeMatch obo:CHMO_0000842 ;          # ultraviolet-visible spectrum (a plot of absorbance vs wavelength)
+    spectro:quantityKind quantitykind:TransmittanceDensity ;
+    rdfs:comment "QUDT has no quantity kind called decadic absorbance: quantitykind:TransmittanceDensity is defined by A10 = -lg(tau) and is used here (its QUDT description is a copy of the transmittance one, an upstream quirk)."@en .
+
+# ---------------- Spectral axis ----------------
+
+spectro:SpectralAxis a owl:Class ;
+    rdfs:label "spectral axis"@en , "axe spectral"@fr ;
+    skos:definition "Coordinate along which a spectrum is recorded: wavelength (quantitykind:Wavelength) or photon energy (quantitykind:Energy), with a unit."@en .
+
+spectro:hasSpectralAxis a owl:ObjectProperty ;
+    rdfs:domain spectro:Spectrum ; rdfs:range spectro:SpectralAxis ;
+    rdfs:label "has spectral axis"@en .
+
+spectro:quantityKind a owl:AnnotationProperty ;
+    rdfs:label "expected quantity kind"@en ;
+    rdfs:comment "Quantity kind that the values of a spectrum of this class have (a QUDT quantity kind)."@en .
+
+spectro:hdf5Path a owl:DatatypeProperty ;
+    rdfs:domain spectro:Spectrum ; rdfs:range xsd:string ;
+    rdfs:label "HDF5 path"@en ;
+    rdfs:comment "Path of the data node in the PyMoDAQ HDF5 file."@en .
+
+spectro:peakWavelength a owl:ObjectProperty ;
+    rdfs:domain spectro:AbsorbanceSpectrum ; rdfs:range qudt:QuantityValue ;
+    rdfs:label "wavelength of maximum absorbance"@en , "longueur d'onde du maximum d'absorbance"@fr ;
+    skos:definition "Wavelength at which an absorbance spectrum reaches its maximum (lambda max), given as a QUDT quantity value."@en .

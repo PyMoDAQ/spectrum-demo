@@ -1,0 +1,77 @@
+{
+  "@context": {
+    "obo": "http://purl.obolibrary.org/obo/",
+    "prov": "http://www.w3.org/ns/prov#",
+    "quantitykind": "http://qudt.org/vocab/quantitykind/",
+    "qudt": "http://qudt.org/schema/qudt/",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "sosa": "http://www.w3.org/ns/sosa/",
+    "spectro": "https://w3id.org/pymodaq/spectro#",
+    "unit": "http://qudt.org/vocab/unit/"
+  },
+  "@graph": [
+    {
+      "@id": "https://example.org/data/lab_B.h5#/RawData/Spectrometer/Data1D/CH00/Data00",
+      "@type": "spectro:TransmittanceSpectrum",
+      "qudt:hasQuantityKind": {
+        "@id": "quantitykind:Transmittance"
+      },
+      "qudt:hasUnit": {
+        "@id": "unit:PERCENT"
+      },
+      "rdfs:label": "Trans",
+      "spectro:hasSpectralAxis": {
+        "@id": "_:N8ad05d7fc6134bce83dc77c842c285a3"
+      },
+      "spectro:hdf5Path": "/RawData/Spectrometer/Data1D/CH00/Data00"
+    },
+    {
+      "@id": "_:N8ad05d7fc6134bce83dc77c842c285a3",
+      "@type": "spectro:SpectralAxis",
+      "qudt:hasQuantityKind": {
+        "@id": "quantitykind:Energy"
+      },
+      "qudt:hasUnit": {
+        "@id": "unit:EV"
+      }
+    },
+    {
+      "@id": "https://example.org/data/lab_B.h5#measurement",
+      "@type": "spectro:AbsorptionMeasurement",
+      "rdfs:label": "absorption measurement, Lab B",
+      "sosa:hasResult": {
+        "@id": "https://example.org/data/lab_B.h5#/RawData/Spectrometer/Data1D/CH00/Data00"
+      },
+      "sosa:usedProcedure": {
+        "@id": "obo:CHMO_0000292"
+      }
+    },
+    {
+      "@id": "https://example.org/data/lab_B.h5#absorbance",
+      "@type": "spectro:AbsorbanceSpectrum",
+      "prov:wasDerivedFrom": {
+        "@id": "https://example.org/data/lab_B.h5#/RawData/Spectrometer/Data1D/CH00/Data00"
+      },
+      "qudt:hasQuantityKind": {
+        "@id": "quantitykind:TransmittanceDensity"
+      },
+      "qudt:hasUnit": {
+        "@id": "unit:UNITLESS"
+      },
+      "spectro:peakWavelength": {
+        "@id": "https://example.org/data/lab_B.h5#absorbance-peak"
+      }
+    },
+    {
+      "@id": "https://example.org/data/lab_B.h5#absorbance-peak",
+      "@type": "qudt:QuantityValue",
+      "qudt:hasQuantityKind": {
+        "@id": "quantitykind:Wavelength"
+      },
+      "qudt:hasUnit": {
+        "@id": "unit:NanoM"
+      },
+      "qudt:numericValue": 450.3
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+  "@context": {
+    "obo": "http://purl.obolibrary.org/obo/",
+    "prov": "http://www.w3.org/ns/prov#",
+    "quantitykind": "http://qudt.org/vocab/quantitykind/",
+    "qudt": "http://qudt.org/schema/qudt/",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "sosa": "http://www.w3.org/ns/sosa/",
+    "spectro": "https://w3id.org/pymodaq/spectro#",
+    "unit": "http://qudt.org/vocab/unit/"
+  },
+  "@graph": [
+    {
+      "@id": "https://example.org/data/lab_A.h5#measurement",
+      "@type": "spectro:AbsorptionMeasurement",
+      "rdfs:label": "absorption measurement, Lab A",
+      "sosa:hasResult": [
+        {
+          "@id": "https://example.org/data/lab_A.h5#/RawData/Spectrometer/Data1D/CH00/Data00"
+        },
+        {
+          "@id": "https://example.org/data/lab_A.h5#/RawData/Spectrometer/Data1D/CH01/Data00"
+        },
+        {
+          "@id": "https://example.org/data/lab_A.h5#/RawData/Spectrometer/Data1D/CH02/Data00"
+        }
+      ],
+      "sosa:usedProcedure": {
+        "@id": "obo:CHMO_0000292"
+      }
+    },
+    {
+      "@id": "https://example.org/data/lab_A.h5#/RawData/Spectrometer/Data1D/CH01/Data00",
+      "@type": "spectro:ReferenceSpectrum",
+      "qudt:hasQuantityKind": {
+        "@id": "quantitykind:Count"
+      },
+      "qudt:hasUnit": {
+        "@id": "unit:NUM"
+      },
+      "rdfs:label": "reference",
+      "spectro:hasSpectralAxis": {
+        "@id": "_:N8251f5076fbb406088bc1d6e54a1ed24"
+      },
+      "spectro:hdf5Path": "/RawData/Spectrometer/Data1D/CH01/Data00"
+    },
+    {
+      "@id": "_:N8251f5076fbb406088bc1d6e54a1ed24",
+      "@type": "spectro:SpectralAxis",
+      "qudt:hasQuantityKind": {
+        "@id": "quantitykind:Wavelength"
+      },
+      "qudt:hasUnit": {
+        "@id": "unit:NanoM"
+      }
+    },
+    {
+      "@id": "https://example.org/data/lab_A.h5#/RawData/Spectrometer/Data1D/CH02/Data00",
+      "@type": "spectro:SampleSpectrum",
+      "qudt:hasQuantityKind": {
+        "@id": "quantitykind:Count"
+      },
+      "qudt:hasUnit": {
+        "@id": "unit:NUM"
+      },
+      "rdfs:label": "signal",
+      "spectro:hasSpectralAxis": {
+        "@id": "_:N4d6cca9dbbb04955a0a074461715f25b"
+      },
+      "spectro:hdf5Path": "/RawData/Spectrometer/Data1D/CH02/Data00"
+    },
+    {
+      "@id": "_:N4d6cca9dbbb04955a0a074461715f25b",
+      "@type": "spectro:SpectralAxis",
+      "qudt:hasQuantityKind": {
+        "@id": "quantitykind:Wavelength"
+      },
+      "qudt:hasUnit": {
+        "@id": "unit:NanoM"
+      }
+    },
+    {
+      "@id": "https://example.org/data/lab_A.h5#absorbance-peak",
+      "@type": "qudt:QuantityValue",
+      "qudt:hasQuantityKind": {
+        "@id": "quantitykind:Wavelength"
+      },
+      "qudt:hasUnit": {
+        "@id": "unit:NanoM"
+      },
+      "qudt:numericValue": 450.3
+    },
+    {
+      "@id": "https://example.org/data/lab_A.h5#/RawData/Spectrometer/Data1D/CH00/Data00",
+      "@type": "spectro:DarkSpectrum",
+      "qudt:hasQuantityKind": {
+        "@id": "quantitykind:Count"
+      },
+      "qudt:hasUnit": {
+        "@id": "unit:NUM"
+      },
+      "rdfs:label": "background",
+      "spectro:hasSpectralAxis": {
+        "@id": "_:N9fa335a837cb435983e538b36b0cdc91"
+      },
+      "spectro:hdf5Path": "/RawData/Spectrometer/Data1D/CH00/Data00"
+    },
+    {
+      "@id": "_:N9fa335a837cb435983e538b36b0cdc91",
+      "@type": "spectro:SpectralAxis",
+      "qudt:hasQuantityKind": {
+        "@id": "quantitykind:Wavelength"
+      },
+      "qudt:hasUnit": {
+        "@id": "unit:NanoM"
+      }
+    },
+    {
+      "@id": "https://example.org/data/lab_A.h5#absorbance",
+      "@type": "spectro:AbsorbanceSpectrum",
+      "prov:wasDerivedFrom": [
+        {
+          "@id": "https://example.org/data/lab_A.h5#/RawData/Spectrometer/Data1D/CH00/Data00"
+        },
+        {
+          "@id": "https://example.org/data/lab_A.h5#/RawData/Spectrometer/Data1D/CH01/Data00"
+        },
+        {
+          "@id": "https://example.org/data/lab_A.h5#/RawData/Spectrometer/Data1D/CH02/Data00"
+        }
+      ],
+      "qudt:hasQuantityKind": {
+        "@id": "quantitykind:TransmittanceDensity"
+      },
+      "qudt:hasUnit": {
+        "@id": "unit:UNITLESS"
+      },
+      "spectro:peakWavelength": {
+        "@id": "https://example.org/data/lab_A.h5#absorbance-peak"
+      }
+    }
+  ]
+}
