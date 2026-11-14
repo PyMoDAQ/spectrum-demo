@@ -107,15 +107,17 @@ def check_annotations(dte: DataToExport) -> list:
     """List of human-readable problems; empty if every spectrum is fully annotated."""
     problems = []
     for dwa in dte:
+        axis = dwa.axes[0]
         missing = [k for k in v.ANNOTATION_KEYS if not hasattr(dwa, k)]
+        missing += [f"axis {k}" for k in v.AXIS_ANNOTATION_KEYS if not hasattr(axis, k)]
         if missing:
             problems.append(f"'{dwa.name}' has no {', '.join(missing)}")
             continue
-        for key in (v.UNIT_IRI, v.AXIS_UNIT_IRI):
+        for what, unit in (("", getattr(dwa, v.UNIT_IRI)), ("axis ", getattr(axis, v.UNIT_IRI))):
             try:
-                sem.to_si_factor(getattr(dwa, key))
+                sem.to_si_factor(unit)
             except KeyError:
-                problems.append(f"'{dwa.name}': unit {getattr(dwa, key)} unknown to the ontology")
+                problems.append(f"'{dwa.name}': {what}unit {unit} unknown to the ontology")
     return problems
 
 
@@ -124,9 +126,10 @@ def _find(dte: DataToExport, cls) -> list:
 
 
 def _spectral_axis_nm(dwa: DataWithAxes, log: list) -> np.ndarray:
-    values = dwa.axes[0].get_data()
-    kind = getattr(dwa, v.AXIS_QUANTITY_KIND)
-    unit = getattr(dwa, v.AXIS_UNIT_IRI)
+    axis = dwa.axes[0]
+    values = axis.get_data()
+    kind = getattr(axis, v.QUANTITY_KIND)
+    unit = getattr(axis, v.UNIT_IRI)
     si = values * sem.to_si_factor(unit)
     if kind == str(v.QK.Wavelength):
         log.append(f"axis is a {sem.label(kind)} in {sem.label(unit)}: converted to nm")

@@ -17,6 +17,8 @@ def files(tmp_path_factory):
 def test_annotations_survive_save_and_load(files):
     dte, _ = storage.load(files["B"])
     assert dte[0].unit_iri == "http://qudt.org/vocab/unit/PERCENT"
+    assert dte[0].axes[0].unit_iri == "http://qudt.org/vocab/unit/EV"
+    assert dte[0].axes[0].quantity_kind.endswith("quantitykind/Energy")
     assert dte[0].semantic_iri.endswith("#TransmittanceSpectrum")
 
 
@@ -39,7 +41,7 @@ def test_lab_scripts_fail_on_the_other_lab(files):
 
 def test_missing_annotations_are_reported(files):
     dte, _ = storage.load(files["B_plain"])
-    with pytest.raises(analysis.AnnotationError, match="semantic_iri"):
+    with pytest.raises(analysis.AnnotationError, match="semantic_iri.*axis quantity_kind"):
         analysis.analyse(dte)
 
 

@@ -168,34 +168,43 @@ It works, but:
 ## 4. After: the data says what it is
 
 The annotated files (`lab_A.h5`, `lab_B.h5`) hold the same arrays. The only difference:
-when the data object was created, five extra attributes were added to it with PyMoDAQ's own
-`add_extra_attribute` (see `src/spectrum_demo/simulation.py`):
+when the objects were created, extra attributes were added with PyMoDAQ's `add_extra_attribute`
+pattern (see `src/spectrum_demo/simulation.py`). The data says what it is, and **the axis
+describes itself the same way**:
 
 ```python
 dwa.add_extra_attribute(
-    semantic_iri="https://w3id.org/pymodaq/spectro#DarkSpectrum",      # what it is
-    quantity_kind="http://qudt.org/vocab/quantitykind/Count",           # what is measured
-    unit_iri="http://qudt.org/vocab/unit/NUM",                         # in which unit
-    axis_quantity_kind="http://qudt.org/vocab/quantitykind/Wavelength", # along what
-    axis_unit_iri="http://qudt.org/vocab/unit/NanoM",                  # in which unit
-)
+    semantic_iri="https://w3id.org/pymodaq/spectro#DarkSpectrum",   # what it is
+    quantity_kind="http://qudt.org/vocab/quantitykind/Count",        # what is measured
+    unit_iri="http://qudt.org/vocab/unit/NUM")                      # in which unit
+
+axis.add_extra_attribute(
+    quantity_kind="http://qudt.org/vocab/quantitykind/Wavelength",   # what the axis is
+    unit_iri="http://qudt.org/vocab/unit/NanoM")                    # in which unit
 ```
 
-PyMoDAQ's savers write every extra attribute next to the data in the HDF5 file, and its loader
-gives them back. Here is what is physically in Lab B's file, read with plain `h5py`
-(no PyMoDAQ, no demo code). PyMoDAQ stores each attribute as a small JSON record (type and
-value); we print the raw record once, then only the values:
+PyMoDAQ's savers write every extra attribute next to the data (and next to each axis) in the
+HDF5 file, and its loader gives them back. Here is what is physically in Lab B's file, read with
+plain `h5py` (no PyMoDAQ, no demo code). PyMoDAQ stores each attribute as a small JSON record
+(type and value); we print the raw record once, then only the values:
 """)
 
 code(r"""
 import json
 
-with h5py.File(DATA / "lab_B.h5", "r") as f:
-    node = f["/RawData/Spectrometer/Data1D/CH00/Data00"]
-    print("raw HDF5 attribute:", node.attrs["unit_iri"], "\n")
-    for key in ("units", *v.ANNOTATION_KEYS):
+def show(node, keys):
+    for key in keys:
         value = json.loads(node.attrs[key])["data"].strip("'")
-        print(f"{key:20s} {value}")
+        print(f"  {key:15s} {value}")
+
+with h5py.File(DATA / "lab_B.h5", "r") as f:
+    data_node = f["/RawData/Spectrometer/Data1D/CH00/Data00"]
+    axis_node = f["/RawData/Spectrometer/Data1D/CH00/Axis00"]
+    print("raw HDF5 attribute:", data_node.attrs["unit_iri"], "\n")
+    print("data node:")
+    show(data_node, ("units", *v.ANNOTATION_KEYS))
+    print("axis node:")
+    show(axis_node, ("units", *v.AXIS_ANNOTATION_KEYS))
 """)
 
 md(r"""
@@ -212,10 +221,11 @@ for lab, (dte, file_attrs) in annotated.items():
     for dwa in dte:
         concept = getattr(dwa, v.SEMANTIC_IRI)
         print(f"'{dwa.name}' is a {semantics.label(concept)}: {semantics.definition(concept)}")
+        axis = dwa.axes[0]
         print(f"    values: {semantics.label(getattr(dwa, v.QUANTITY_KIND))} "
               f"in {semantics.label(getattr(dwa, v.UNIT_IRI))};  "
-              f"axis: {semantics.label(getattr(dwa, v.AXIS_QUANTITY_KIND))} "
-              f"in {semantics.label(getattr(dwa, v.AXIS_UNIT_IRI))}")
+              f"axis: {semantics.label(getattr(axis, v.QUANTITY_KIND))} "
+              f"in {semantics.label(getattr(axis, v.UNIT_IRI))}")
 """)
 
 md(r"""
@@ -371,9 +381,10 @@ md(r"""
 
 **Shown here**
 
-* The annotations are five strings per dataset, written with PyMoDAQ's existing
-  `extra_attributes`; PyMoDAQ already saves and reloads them, so no change to PyMoDAQ was
-  needed for this demo.
+* The annotations are three strings per dataset and two per axis, written with PyMoDAQ's
+  `extra_attributes` pattern, which PyMoDAQ saves and reloads with the data. For data this
+  already works in released PyMoDAQ; for axes it needs the change proposed in PyMoDAQ PR #1493 (patch in `pymodaq-patches/`)
+  (not released yet, see the README).
 * One analysis script handles two incompatible conventions with no configuration, and refuses
   to guess when information is missing.
 * The same annotations give, for free, a searchable description (JSON-LD) and cross-lab
@@ -385,9 +396,9 @@ md(r"""
   the code that already knows the role of each spectrum: for instance the Absorption extension
   of the tutorial, which has *Take Background* and *Take Reference* buttons, knows exactly which
   spectrum is the dark and which is the reference.
-* PyMoDAQ `Axis` objects have no extra attributes, so the axis annotations are stored on the
-  data object (`axis_quantity_kind`, `axis_unit_iri`).
-* The vocabulary is a draft (namespace not reserved, not reviewed by spectroscopists).
+* If an axis is converted to other units, its `unit_iri` is no longer valid: PyMoDAQ does not
+  update it (the converted axis is a new object without extra attributes).
+* The vocabulary is a draft (namespace not reserved on w3id.org, not reviewed by spectroscopists).
 * QUDT has no term named "decadic absorbance"; we use `TransmittanceDensity`, defined as
   −log10 of the transmittance.
 

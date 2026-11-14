@@ -82,13 +82,12 @@ def make_lab_a(annotate: bool = True, seed: int = 1) -> DataToExport:
         axis = Axis(label="Wavelength", units="nm", data=spectro.wavelengths, index=0)
         dwa = DataRaw(name, data=[values], units="counts", axes=[axis], labels=[name])
         if annotate:
-            dwa.add_extra_attribute(**{
-                v.SEMANTIC_IRI: str(concept),
-                v.QUANTITY_KIND: str(v.QK.Count),
-                v.UNIT_IRI: str(v.UNIT.NUM),
-                v.AXIS_QUANTITY_KIND: str(v.QK.Wavelength),
-                v.AXIS_UNIT_IRI: str(v.UNIT.NanoM),
-            })
+            # the axis describes itself, like the data does
+            axis.add_extra_attribute(**{v.QUANTITY_KIND: str(v.QK.Wavelength),
+                                        v.UNIT_IRI: str(v.UNIT.NanoM)})
+            dwa.add_extra_attribute(**{v.SEMANTIC_IRI: str(concept),
+                                       v.QUANTITY_KIND: str(v.QK.Count),
+                                       v.UNIT_IRI: str(v.UNIT.NUM)})
         return dwa
 
     return DataToExport("LabA", data=[
@@ -109,11 +108,9 @@ def make_lab_b(annotate: bool = True, seed: int = 2, n_pixels: int = 400) -> Dat
     axis = Axis(label="Photon energy", units="eV", data=energy_ev, index=0)
     dwa = DataRaw("Trans", data=[transmittance_percent], units="%", axes=[axis], labels=["Trans"])
     if annotate:
-        dwa.add_extra_attribute(**{
-            v.SEMANTIC_IRI: str(v.SPECTRO.TransmittanceSpectrum),
-            v.QUANTITY_KIND: str(v.QK.Transmittance),
-            v.UNIT_IRI: str(v.UNIT.PERCENT),
-            v.AXIS_QUANTITY_KIND: str(v.QK.Energy),
-            v.AXIS_UNIT_IRI: str(v.UNIT.EV),
-        })
+        axis.add_extra_attribute(**{v.QUANTITY_KIND: str(v.QK.Energy),
+                                    v.UNIT_IRI: str(v.UNIT.EV)})
+        dwa.add_extra_attribute(**{v.SEMANTIC_IRI: str(v.SPECTRO.TransmittanceSpectrum),
+                                   v.QUANTITY_KIND: str(v.QK.Transmittance),
+                                   v.UNIT_IRI: str(v.UNIT.PERCENT)})
     return DataToExport("LabB", data=[dwa])

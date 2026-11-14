@@ -7,8 +7,8 @@ photon energy in eV, different channel names). We show that:
 1. **without annotations**, each lab's analysis script fails on the other lab's file, once
    with a crash and once silently with wrong numbers; the usual fix is a hand-written
    configuration per lab;
-2. **with annotations** (five IRIs per dataset, stored in PyMoDAQ's existing
-   `extra_attributes` and saved in the HDF5 file), one script analyses both files with no
+2. **with annotations** (IRIs on each dataset and on each axis, stored with PyMoDAQ's
+   `extra_attributes` pattern and saved in the HDF5 file), one script analyses both files with no
    configuration, explains what it did, and refuses to guess when information is missing;
 3. the same annotations give a JSON-LD description of each file, and one SPARQL query can be
    asked to both labs at once.
@@ -21,6 +21,7 @@ Start with the notebook: [`notebooks/spectrum_ontology_demo.ipynb`](notebooks/sp
 ```bash
 git clone <this repo> && cd <this repo>
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
+# 1. patched pymodaq_data first (see "Requires a PyMoDAQ patch" below), then:
 pip install -e ".[notebook,test]"
 python scripts/make_datasets.py      # (re)creates data/*.h5
 jupyter lab notebooks/spectrum_ontology_demo.ipynb
@@ -28,8 +29,8 @@ pytest
 ```
 
 Install with `-e` (editable): the code reads the ontology files from `ontology/` in the
-repository. Requires Python ≥ 3.10 and `pymodaq_data` ≥ 5.3 (only the data layer of PyMoDAQ,
-no Qt needed). Tested with pymodaq_data 5.3.10, Python 3.13, Linux.
+repository. Requires Python ≥ 3.10 and the patched `pymodaq_data` described below (only the data layer of
+PyMoDAQ, no Qt needed). Tested with PyMoDAQ `dev` at commit 9bc6957 plus the patch, Python 3.13, Linux.
 
 ## Contents
 
@@ -47,18 +48,32 @@ no Qt needed). Tested with pymodaq_data 5.3.10, Python 3.13, Linux.
 
 ## The annotations
 
-Each PyMoDAQ `DataWithAxes` gets five extra attributes:
+Each PyMoDAQ `DataWithAxes` gets three extra attributes, and **each of its `Axis` gets two**
+(same `add_extra_attribute` pattern, so the axis is self-explanatory):
 
-| Attribute | Meaning | Example (Lab B) |
-|---|---|---|
-| `semantic_iri` | what the dataset is | `spectro:TransmittanceSpectrum` |
-| `quantity_kind` | quantity of the values (QUDT) | `quantitykind:Transmittance` |
-| `unit_iri` | unit of the values (QUDT) | `unit:PERCENT` |
-| `axis_quantity_kind` | quantity of the spectral axis (QUDT) | `quantitykind:Energy` |
-| `axis_unit_iri` | unit of the spectral axis (QUDT) | `unit:EV` |
+| Attribute | On | Meaning | Example (Lab B) |
+|---|---|---|---|
+| `semantic_iri` | data | what the dataset is | `spectro:TransmittanceSpectrum` |
+| `quantity_kind` | data | quantity of the values (QUDT) | `quantitykind:Transmittance` |
+| `unit_iri` | data | unit of the values (QUDT) | `unit:PERCENT` |
+| `quantity_kind` | axis | quantity of the axis (QUDT) | `quantitykind:Energy` |
+| `unit_iri` | axis | unit of the axis (QUDT) | `unit:EV` |
 
-The axis annotations sit on the data object because PyMoDAQ `Axis` objects have no extra
-attributes.
+## Requires a PyMoDAQ change (axis extra attributes)
+
+`Axis` has no extra attributes in released `pymodaq_data` (5.3.10). The change is proposed in
+[PyMoDAQ PR #1493](https://github.com/PyMoDAQ/PyMoDAQ/pull/1493) (target branch `dev`):
+`Axis(..., **kwargs)`, `Axis.add_extra_attribute`, saved and reloaded by `AxisSaverLoader`, with tests.
+Until it is merged and released, the demo works only with a patched `pymodaq_data`:
+
+```bash
+git clone -b feature/axis-extra-attributes https://github.com/PyMoDAQ/PyMoDAQ && cd PyMoDAQ
+pip install -e packages/pymodaq_utils -e packages/pymodaq_data
+```
+
+(or `git apply pymodaq-patches/0001-axis-extra-attributes.patch` on a `dev` checkout; the patch
+is the same as the PR). Not covered: the network (LECO) serialization of `Axis`, which would
+change the wire format.
 
 ## Status and limits
 

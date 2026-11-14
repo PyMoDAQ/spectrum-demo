@@ -15,14 +15,14 @@ OBO = Namespace("http://purl.obolibrary.org/obo/")
 SOSA = Namespace("http://www.w3.org/ns/sosa/")
 PROV = Namespace("http://www.w3.org/ns/prov#")
 
-# Names of the extra attributes written on each DataWithAxes
-SEMANTIC_IRI = "semantic_iri"              # what the spectrum IS (spectro:SampleSpectrum, ...)
-QUANTITY_KIND = "quantity_kind"            # QUDT quantity kind of the values
-UNIT_IRI = "unit_iri"                      # QUDT unit of the values
-AXIS_QUANTITY_KIND = "axis_quantity_kind"  # QUDT quantity kind of the spectral axis
-AXIS_UNIT_IRI = "axis_unit_iri"            # QUDT unit of the spectral axis
+# Names of the extra attributes. The same pattern is used on a DataWithAxes and on each of its
+# Axis, so an axis describes itself exactly like the data does.
+SEMANTIC_IRI = "semantic_iri"    # what the dataset IS (spectro:SampleSpectrum, ...); data only
+QUANTITY_KIND = "quantity_kind"  # QUDT quantity kind of the values (data) or of the axis
+UNIT_IRI = "unit_iri"            # QUDT unit of the values (data) or of the axis
 
-ANNOTATION_KEYS = (SEMANTIC_IRI, QUANTITY_KIND, UNIT_IRI, AXIS_QUANTITY_KIND, AXIS_UNIT_IRI)
+ANNOTATION_KEYS = (SEMANTIC_IRI, QUANTITY_KIND, UNIT_IRI)   # on a DataWithAxes
+AXIS_ANNOTATION_KEYS = (QUANTITY_KIND, UNIT_IRI)            # on an Axis
 
 # Attribute written on the file's RawData group
 TECHNIQUE_IRI = "technique_iri"

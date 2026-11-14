@@ -91,8 +91,8 @@ def to_rdf(dte: DataToExport, file_iri: str, file_attrs: dict = None, result=Non
         axis = BNode()
         g.add((node, v.SPECTRO.hasSpectralAxis, axis))
         g.add((axis, RDF.type, v.SPECTRO.SpectralAxis))
-        g.add((axis, v.QUDT.hasQuantityKind, URIRef(getattr(dwa, v.AXIS_QUANTITY_KIND))))
-        g.add((axis, v.QUDT.hasUnit, URIRef(getattr(dwa, v.AXIS_UNIT_IRI))))
+        g.add((axis, v.QUDT.hasQuantityKind, URIRef(getattr(dwa.axes[0], v.QUANTITY_KIND))))
+        g.add((axis, v.QUDT.hasUnit, URIRef(getattr(dwa.axes[0], v.UNIT_IRI))))
 
     if result is not None:
         absorbance = URIRef(f"{file_iri}#absorbance")
